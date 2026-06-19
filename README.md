@@ -1,4 +1,12 @@
 # PhishGuard
+ფაილების გაშცვებისას phishing-backend ფოლდერის ტერმინალში "node server.js" გაუშვით რომ დამყარდეს კავშირი localhost-თან
+გახსენით ტერმინალი, დაწერეთ: 
+cd phishing-backend
+node server.js
+
+
+
+
 გამოყენებული ლიტერატურა:
 
 
