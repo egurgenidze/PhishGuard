@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard — Email Threat Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0c0f;
+      --surface: #111318;
+      --surface2: #181c24;
+      --border: #1e2430;
+      --border-active: #2e4a6e;
+      --text: #c8d4e8;
+      --text-dim: #5a6a82;
+      --text-bright: #e8f0fc;
+      --accent: #3d8bff;
+      --accent-dim: #1a3a6e;
+      --danger: #ff4b4b;
+      --danger-dim: #2e1010;
+      --warn: #ffb74b;
+      --safe: #3dffaa;
+      --safe-dim: #0d2e1e;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid ფონი*/
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(61,139,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,139,255,.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 48px 24px 120px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 48px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      flex-shrink: 0;
+    } 
+
+
+
+
+
+
+    .logo-text {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .logo-text span {
+      color: var(--accent);
+    }
+
+  
+    
+
+
+
+    .hero {
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 600;
+      color: var(--text-bright);
+      line-height: 1.15;
+      letter-spacing: -.01em;
+      margin-bottom: 12px;
+    }
+
+    h1 .line2 {
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 15px;
+      color: var(--text-dim);
+      max-width: 500px;
+      line-height: 1.65;
+    }
+
+   
+    
+    .tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 10px 24px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all .2s;
+      border-right: 1px solid var(--border);
+    }
+
+    .tab-btn:last-child { border-right: none; }
+
+    .tab-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+
+    
+
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+
+    label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .1em;
+
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 180px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    textarea::placeholder { color: var(--text-dim); }
+    textarea:focus { border-color: var(--border-active); }
+
+    input[type="email"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input[type="email"]::placeholder { color: var(--text-dim); }
+    input[type="email"]:focus { border-color: var(--border-active); }
+
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+
+
+
+
+
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      background: var(--surface2);
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .drop-label {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .drop-label strong { color: var(--accent); }
+
+    .file-selected {
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--safe);
+      display: none;
+    }
+
+  
+    .submit-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 28px;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 24px;
+      text-transform: uppercase;
+    }
+
+    .submit-btn:hover { background: #5a9fff; transform: translateY(-1px); }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    .submit-btn.loading .spinner { display: block; }
+    .submit-btn.loading .btn-text::after { content: '…'; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+
+    
+    #result-area {
+      display: none;
+      animation: slideUp .35s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .result-header.safe   { background: var(--safe-dim);   border-color: var(--safe); }
+    .result-header.danger { background: var(--danger-dim); border-color: var(--danger); }
+    .result-header.warn   { background: #1e1a0d;           border-color: var(--warn); }
+    .result-header.neutral { background: var(--surface2);  border-color: var(--border); }
+
+    .result-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .safe .result-badge   { background: var(--safe);   color: #000; }
+    .danger .result-badge { background: var(--danger); color: #fff; }
+    .warn .result-badge   { background: var(--warn);   color: #000; }
+    .neutral .result-badge { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+    .result-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .result-body {
+      padding: 24px;
+      background: var(--surface);
+    }
+
+    .result-raw {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .result-meta {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .result-meta a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+
+    
+    .error-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--danger-dim);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 20px;
+      display: none;
+    }
+
+    .error-icon { color: var(--danger); flex-shrink: 0; font-size: 16px; }
+
+ 
+    .tip-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 16px;
+      margin-bottom: 60px;
+    }
+
+    .tip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+   
+
+    .learning-section {
+      background: transparent;
+      padding: 0;
+      margin-bottom: 80px;
+    }
+
+  
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+
+
+    .resource-section {
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .resource-section:last-child {
+      border-bottom: none;
+    }
+
+    .resource-title {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .resource-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .resource-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 12px 0;
+    }
+
+    .resource-list li {
+      padding: 8px 0 8px 24px;
+      position: relative;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .resource-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .tip-section {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      padding: 16px;
+      margin: 16px 0;
+      border-radius: 6px;
+    }
+
+    .tip-header {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .tip-section p {
+      font-size: 14px;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .alert-section {
+      background: var(--surface2);
+      border-left: 4px solid var(--warn);
+      padding: 16px;
+      margin: 16px 0;
+      border-radius: 6px;
+    }
+
+    .alert-critical {
+      border-left-color: var(--danger);
+      background: var(--danger-dim);
+    }
+
+    .alert-header {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--warn);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .alert-critical .alert-header {
+      color: var(--danger);
+    }
+
+    .alert-section ol, .alert-section ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .alert-section li {
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .hygiene-card {
+      display: flex;
+      gap: 16px;
+      background: var(--surface2);
+      padding: 16px;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .hygiene-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .hygiene-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-start;
+      padding-top: 2px;
+    }
+
+    .hygiene-content {
+      flex: 1;
+    }
+
+    .hygiene-content strong {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .hygiene-content p {
+      font-size: 13px;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .resource-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .resource-table tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .resource-table tr:hover {
+      background: var(--surface2);
+    }
+
+    .resource-table td {
+      padding: 12px;
+    }
+
+    .resource-table code {
+      background: var(--surface);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <div class="logo-icon">⛨</div>
+      <div class="logo-text"><span>Phish</span>Guard</div>
+    </header>
+
+    <div class="hero">
+      <h1>Analyze suspicious<br><span class="line2">email threats.</span></h1>
+      <p class="hero-sub">Paste email content or upload an .eml file. Our system checks links, headers, and content against threat databases and generates a detailed report.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('text')">Paste Text</button>
+      <button class="tab-btn" onclick="switchTab('eml')">.EML File</button>
+    </div>
+
+    <div class="panel">
+
+      <!-- ტექსტის ჩასმა -->
+      <div id="tab-text" class="tab-panel active">
+        <div class="field">
+          <label>Email content</label>
+          <textarea id="email-text" placeholder="Paste the full email here — headers, body, everything…"></textarea>
+        </div>
+        <div class="field">
+          <label>Your email (for the PDF report)</label>
+          <input type="email" id="user-email-text" placeholder="you@example.com" />
+        </div>
+        <button class="submit-btn" id="btn-text" onclick="analyzeText()">
+          <div class="spinner"></div>
+          <span class="btn-text">Analyze Email</span>
+        </button>
+      </div>
+
+      <!--  .EML ატვირთვა -->
+      <div id="tab-eml" class="tab-panel">
+        <div class="field">
+          <label>.EML file</label>
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="eml-file" accept=".eml" onchange="onFileSelect(this)" />
+            <div class="drop-icon">📎</div>
+            <div class="drop-label">Drop your <strong>.eml</strong> file here, or <strong>click to browse</strong></div>
+            <div class="file-selected" id="file-name"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Your email (for the PDF report)</label>
+          <input type="email" id="user-email-eml" placeholder="you@example.com" />
+        </div>
+        <button class="submit-btn" id="btn-eml" onclick="analyzeEml()">
+          <div class="spinner"></div>
+          <span class="btn-text">Analyze File</span>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="error-box" id="error-box">
+      <span class="error-icon">✕</span>
+      <span id="error-msg"></span>
+    </div>
+
+    <div id="result-area">
+      <div class="result-panel">
+        <div class="result-header neutral" id="result-header">
+          <span class="result-badge" id="result-badge">—</span>
+          <span class="result-title" id="result-title">Analysis complete</span>
+        </div>
+        <div class="result-body">
+          <div class="result-raw" id="result-raw"></div>
+          <div class="result-meta" id="result-meta"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-bar">
+      <div class="tip-dot"></div>
+      Analysis results also delivered to your email. Check your Tines workflow for VirusTotal &amp; OpenAI integration.
+    </div>
+
+   
+    <div style="height: 80px; border-bottom: 2px solid var(--border); margin: 40px 0 60px 0;"></div>
+
+  
+
+    <div class="learning-section">
+      <h2 style="color: var(--accent); border-bottom: 3px solid var(--accent); padding-bottom: 12px; margin-bottom: 30px; font-family: var(--mono); font-size: 22px;">📚 Learn About Phishing & Cyber Security</h2>
+
+      <div class="resource-section">
+        <h3 class="resource-title">What is Phishing?</h3>
+        <p class="resource-text">
+          Phishing is a social engineering attack where attackers impersonate trusted organizations to trick you into revealing sensitive information, downloading malware, or clicking malicious links. Phishing emails typically:
+        </p>
+        <ul class="resource-list">
+          <li><strong>Impersonate trusted brands</strong> (banks, PayPal, Amazon, Apple, etc.)</li>
+          <li><strong>Create urgency</strong> ("Verify now or your account will be locked!")</li>
+          <li><strong>Ask for credentials</strong> (passwords, credit card numbers, SSN)</li>
+          <li><strong>Use fake links</strong> that look real but lead to malicious sites</li>
+          <li><strong>Include attachments</strong> with malware or ransomware</li>
+          <li><strong>Spoof email addresses</strong> to appear legitimate</li>
+        </ul>
+      </div>
+
+      <div class="resource-section">
+        <h3 class="resource-title">🛡️ How to Prevent Phishing</h3>
+        
+        <div class="tip-section">
+          <div class="tip-header">1. Check the Sender Address</div>
+          <p>Don't just look at the display name. Check the actual email address. Scammers often use addresses like <code>paypa1.com</code> (with a "1" instead of "l") or <code>apple-security@gmail.com</code>.</p>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">2. Hover Before You Click</div>
+          <p>Before clicking links in emails, hover over them to see the actual URL. If it doesn't match where it claims to go, don't click it. Malicious links often hide under official-looking text.</p>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">3. Verify Unexpected Requests</div>
+          <p>If an email claims to be from your bank, company, or service asking you to "verify your account," <strong>call them directly using a number from their official website</strong>. Don't use contact info from the email.</p>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">4. Look for Red Flags</div>
+          <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li>Poor grammar, spelling mistakes, or odd phrasing</li>
+            <li>Generic greetings ("Dear Customer" instead of your name)</li>
+            <li>Urgent language or threats</li>
+            <li>Suspicious attachments or requests to enable macros</li>
+            <li>Mismatched logos or branding</li>
+          </ul>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">5. Use Multi-Factor Authentication (MFA)</div>
+          <p>Even if attackers steal your password, MFA prevents them from accessing your account. Enable it on email, banking, social media, and work accounts.</p>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">6. Keep Software Updated</div>
+          <p>Enable automatic updates for your operating system, browser, and apps. Security patches fix vulnerabilities that phishing links might exploit.</p>
+        </div>
+
+        <div class="tip-section">
+          <div class="tip-header">7. Use a Password Manager</div>
+          <p>Password managers (like Bitwarden, 1Password, LastPass) auto-fill credentials only on legitimate websites. They won't fill in your password on fake login pages.</p>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3 class="resource-title">🚨 I Think I Was Phished — What Do I Do?</h3>
+        
+        <div class="alert-section alert-critical">
+          <div class="alert-header">Immediate Actions (First Hour)</div>
+          <ol style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li><strong>Change your password immediately</strong> from a different, clean device</li>
+            <li><strong>Enable/check MFA</strong> on the affected account</li>
+            <li><strong>Check recent activity</strong> — look for logins from unfamiliar locations</li>
+            <li><strong>Contact the organization</strong> (use official phone number, not email reply)</li>
+            <li><strong>Run antivirus scan</strong> if you downloaded an attachment</li>
+          </ol>
+        </div>
+
+        <div class="alert-section alert-warning">
+          <div class="alert-header">Within 24 Hours</div>
+          <ol style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li><strong>Monitor your accounts</strong> for unauthorized transactions</li>
+            <li><strong>Check credit reports</strong> at annualcreditreport.com (free in US)</li>
+            <li><strong>Place a fraud alert</strong> with credit bureaus if identity theft is suspected</li>
+            <li><strong>Report to authorities</strong> — file a report with IC3.gov (FBI) or your local police</li>
+            <li><strong>Alert your bank</strong> if financial accounts are affected</li>
+          </ol>
+        </div>
+
+        <div class="alert-section">
+          <div class="alert-header">Ongoing Monitoring</div>
+          <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li>Monitor bank statements for unauthorized charges</li>
+            <li>Check your credit score regularly (creditkarma.com, creditone.com)</li>
+            <li>Watch for suspicious emails using your compromised email address</li>
+            <li>Consider identity theft protection service for serious breaches</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3 class="resource-title">🔐 General Cyber Hygiene Practices</h3>
+        
+        <div class="hygiene-card">
+          <div class="hygiene-icon">🔑</div>
+          <div class="hygiene-content">
+            <strong>Strong Passwords</strong>
+            <p>Use 12+ characters with uppercase, lowercase, numbers, and symbols. Never reuse passwords across accounts. Let your password manager generate them.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">📱</div>
+          <div class="hygiene-content">
+            <strong>Multi-Factor Authentication</strong>
+            <p>Enable 2FA/MFA on every account that offers it. Use authenticator apps (Google Authenticator, Authy) rather than SMS when possible — SMS can be intercepted.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">🖥️</div>
+          <div class="hygiene-content">
+            <strong>Device Security</strong>
+            <p>Keep OS and software updated automatically. Use antivirus (Windows Defender is fine). Enable a firewall. Use disk encryption (BitLocker, FileVault).</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">🔍</div>
+          <div class="hygiene-content">
+            <strong>Browser Safety</strong>
+            <p>Use updated browsers (Chrome, Firefox, Safari, Edge). Install ad blockers and anti-phishing extensions. Avoid public WiFi for sensitive transactions; use VPN if you must.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">📧</div>
+          <div class="hygiene-content">
+            <strong>Email Security</strong>
+            <p>Don't open attachments from unknown senders. Be suspicious of unexpected emails asking for credentials. Use email filtering/rules to catch phishing.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">🗑️</div>
+          <div class="hygiene-content">
+            <strong>Secure Deletion</strong>
+            <p>When disposing of devices, use secure erase (not just delete). Shred sensitive documents. Clear browser history/cache regularly.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">👥</div>
+          <div class="hygiene-content">
+            <strong>Backup Your Data</strong>
+            <p>Use 3-2-1 rule: 3 copies of data, 2 different media types, 1 offsite. Backups protect against ransomware and data loss.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">📚</div>
+          <div class="hygiene-content">
+            <strong>Stay Informed</strong>
+            <p>Follow security news. Know about recent breaches affecting services you use. Subscribe to security alerts from your bank and email provider.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">🚫</div>
+          <div class="hygiene-content">
+            <strong>Think Before You Share</strong>
+            <p>Don't share personal info (SSN, credit card, passport) via email. Don't accept friend requests from strangers. Be cautious with social media oversharing.</p>
+          </div>
+        </div>
+
+        <div class="hygiene-card">
+          <div class="hygiene-icon">⚠️</div>
+          <div class="hygiene-content">
+            <strong>Report Suspicious Activity</strong>
+            <p>See phishing? Report it. Received spam? Mark it. Got a scam call? Report to FTC. Your reports help protect others.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="resource-section">
+        <h3 class="resource-title">📞 Useful Resources & Contacts</h3>
+        <table class="resource-table">
+          <tr>
+            <td><strong>FBI Internet Crime Complaint Center</strong></td>
+            <td><code>ic3.gov</code></td>
+          </tr>
+          <tr>
+            <td><strong>Federal Trade Commission Scams</strong></td>
+            <td><code>reportfraud.ftc.gov</code></td>
+          </tr>
+          <tr>
+            <td><strong>Credit Report (US)</strong></td>
+            <td><code>annualcreditreport.com</code></td>
+          </tr>
+          <tr>
+            <td><strong>Password Manager</strong></td>
+            <td><code>bitwarden.com, 1password.com</code></td>
+          </tr>
+          <tr>
+            <td><strong>Authenticator Apps</strong></td>
+            <td><code>Google Authenticator, Authy, Microsoft Authenticator</code></td>
+          </tr>
+          <tr>
+            <td><strong>VPN Services</strong></td>
+            <td><code>ProtonVPN, Mullvad, Wireguard</code></td>
+          </tr>
+          <tr>
+            <td><strong>Check If Email Compromised</strong></td>
+            <td><code>haveibeenpwned.com</code></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = 'http://localhost:3000';
+
+    //  load-ზე ბექენდთან კავშირის შემოწმება
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch(API + '/api/health');
+        const data = await res.json();
+        if (data.webhook === 'MISSING') {
+          showError('⚠️ Backend is running but TINES_WEBHOOK is not set in your .env file.');
+        }
+      } catch {
+        showError(
+          '⚠️ Cannot connect to backend at ' + API + '. ' +
+          'Open a terminal in your project folder and run: node server.js'
+        );
+      }
+    });
+
+    
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      event.currentTarget.classList.add('active');
+      hideError();
+      hideResult();
+    }
+
+    // ── ფაილის არჩევა
+    function onFileSelect(input) {
+      const name = document.getElementById('file-name');
+      if (input.files[0]) {
+        name.textContent = '✓ ' + input.files[0].name;
+        name.style.display = 'block';
+      }
+    }
+
+    // Drag-over სტილისთვის
+    const dz = document.getElementById('drop-zone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => { dz.classList.remove('drag-over'); });
+
+ 
+    async function safeFetch(url, options) {
+      let res;
+      try {
+        res = await fetch(url, options);
+      } catch (networkErr) {
+        throw new Error(
+          'Cannot reach the backend server at ' + API + '.\n' +
+          'Make sure you ran: node server.js'
+        );
+      }
+      // მოცემული ტქესტის წაიკითხავს ჯერ, by deafult JSON ტექსტი არ არის მხოლოდ და თუ unexpected response მიიღო მაშინ eror მესიჯს ამოაგდებს
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // თუ სერვერმა დააბრუნა HTML ან plain ტექსტი, show something useful
+        throw new Error(
+          'Server returned unexpected response (HTTP ' + res.status + ').\n' +
+          'Check your terminal for errors.\n\n' +
+          text.slice(0, 200)
+        );
+      }
+      if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
+      return data;
+    }
+
+    // ტექსტის ანალიზი
+    async function analyzeText() {
+      const emailText  = document.getElementById('email-text').value.trim();
+      const userEmail  = document.getElementById('user-email-text').value.trim();
+      if (!emailText)  return showError('Please paste some email content first.');
+      if (!userEmail)  return showError('Please enter your email address for the report.');
+      setLoading('btn-text', true);
+      hideError(); hideResult();
+      try {
+        const data = await safeFetch(API + '/api/analyze/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailText, userEmail }),
+        });
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        setLoading('btn-text', false);
+      }
+    }
+
+    // EML ანალიზი
+    async function analyzeEml() {
+      const fileInput = document.getElementById('eml-file');
+      const userEmail = document.getElementById('user-email-eml').value.trim();
+      if (!fileInput.files[0]) return showError('Please select an .eml file first.');
+      if (!userEmail)           return showError('Please enter your email address for the report.');
+      setLoading('btn-eml', true);
+      hideError(); hideResult();
+      try {
+        const form = new FormData();
+        form.append('emlFile', fileInput.files[0]);
+        form.append('userEmail', userEmail);
+        const data = await safeFetch(API + '/api/analyze/eml', { method: 'POST', body: form });
+        showResult(data);
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        setLoading('btn-eml', false);
+      }
+    }
+
+    // Display helpers 
+    function showResult(data) {
+      // Tines webhook აბრუნებს  "Ok" მაშინვე რანავს async.
+      // შემდეგ ბექენდს გადააქვს { status: "submitted", message: "..." }
+      const header = document.getElementById('result-header');
+      header.className = 'result-header safe';
+      document.getElementById('result-badge').textContent = 'SUBMITTED';
+      document.getElementById('result-title').textContent = data.message || 'Analysis submitted successfully';
+      document.getElementById('result-raw').textContent =
+        '✓ Your email has been submitted to the Tines analysis pipeline.\n\n' +
+        'The workflow will:\n' +
+        '  • Check sender reputation via EmailRep.io\n' +
+        '  • Scan URLs with VirusTotal / URLScan.io\n' +
+        '  • Hash-check attachments in VirusTotal\n' +
+        '  • Run Sublime Security detection rules\n' +
+        '  • Score attack likelihood\n\n' +
+        'A full report table will be sent to your email address.';
+      document.getElementById('result-meta').textContent = '';
+      document.getElementById('result-area').style.display = 'block';
+    }
+
+    function hideResult() {
+      document.getElementById('result-area').style.display = 'none';
+    }
+
+    function showError(msg) {
+      const box = document.getElementById('error-box');
+      document.getElementById('error-msg').textContent = msg;
+      box.style.display = 'flex';
+    }
+
+    function hideError() {
+      document.getElementById('error-box').style.display = 'none';
+    }
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.classList.toggle('loading', loading);
+    }
+  </script>
+</body>
+</html>
